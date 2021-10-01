@@ -1,38 +1,46 @@
 import logo from './logo.svg';
 import './App.css';
 import { io } from "socket.io-client";
-
-const socket = io("http://localhost:5000")
-
-socket.on("connect", (e) => {
-  console.log("connect", socket)
-})
-
-socket.on("ping", (e) => {
-  console.log(e)
-})
-
-socket.on("mqtt_message", (e) => {
-  console.log(e)
-})
+import { useState, useEffect, useRef } from "react";
 
 function App() {
+  const socketRef = useRef(null)
+  const [data, setData] = useState([])
+  const [rotation, setRotation] = useState(0)
+
+  useEffect(() => {
+    const socket = io("http://10.0.103.84:5000")
+    socket.on("connect", (e) => {
+      console.log("connect", socket)
+      socket.emit("subscribe", { topic: "rooms/shedhalle"})
+    })
+    
+    socket.on("ping", (e) => {
+      console.log(e)
+    })
+    
+    socket.on("mqtt_message", (e) => {
+      const d = JSON.parse(e)
+      d.payload = JSON.parse(d.payload)
+      if(d.payload.angle > 0) {
+        setData(data => [...data, d])
+        setRotation(d.payload.angle)
+      }
+
+    })
+    socketRef.current = socket
+  }, [])
+
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div style={{
+        background: "red",
+        margin: "10em",
+        width: "100px",
+        height: "100px",
+        transform: `rotateZ(${rotation % 360}deg)`
+      }}></div>
     </div>
   );
 }

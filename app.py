@@ -10,10 +10,10 @@ eventlet.monkey_patch()
 app = Flask(__name__)
 app.config['SECRET'] = 'my secret key'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-app.config['MQTT_BROKER_URL'] = 'broker.hivemq.com'
+app.config['MQTT_BROKER_URL'] = '10.0.103.84'
 app.config['MQTT_BROKER_PORT'] = 1883
-app.config['MQTT_USERNAME'] = ''
-app.config['MQTT_PASSWORD'] = ''
+app.config['MQTT_USERNAME'] = 'ioeuser'
+app.config['MQTT_PASSWORD'] = 'ioeuser'
 app.config['MQTT_KEEPALIVE'] = 5
 app.config['MQTT_TLS_ENABLED'] = False
 
@@ -49,8 +49,7 @@ def handle_publish(json_str):
 
 
 @socketio.on('subscribe')
-def handle_subscribe(json_str):
-    data = json.loads(json_str)
+def handle_subscribe(data):
     mqtt.subscribe(data['topic'])
 
 
@@ -65,7 +64,7 @@ def handle_mqtt_message(client, userdata, message):
         topic=message.topic,
         payload=message.payload.decode()
     )
-    socketio.emit('mqtt_message', data=data)
+    socketio.emit('mqtt_message', data=json.dumps(data))
 
 
 @mqtt.on_log()
